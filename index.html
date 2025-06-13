@@ -13,51 +13,107 @@
 
         <div class="form-container">
             <div class="form-column">
-                <label for="judul_scane">1. Judul Scane</label>
-                <input type="text" id="judul_scane" placeholder="Contoh: Terminal bus malam">
+                <div class="field-group">
+                    <label for="judul_scane">1. Judul Scane</label>
+                    <div class="input-with-button">
+                        <input type="text" id="judul_scane" placeholder="Contoh: Terminal bus malam">
+                        <button type="button" class="generate-btn" data-field="judul_scane">Generate</button>
+                    </div>
+                </div>
 
-                <label for="deskripsi_karakter">2. Deskripsi Karakter Inti</label>
-                <textarea id="deskripsi_karakter" rows="8" placeholder="Contoh: Seorang vlogger wanita muda asal Minang berusia 27 tahun. Perawakan/Bentuk Tubuh: tubuh mungil, tinggi 158cm..."></textarea>
+                <div class="field-group">
+                    <label for="deskripsi_karakter">2. Deskripsi Karakter Inti</label>
+                    <div class="input-with-button">
+                        <textarea id="deskripsi_karakter" rows="8" placeholder="Contoh: Seorang vlogger wanita muda asal Minang berusia 27 tahun. Perawakan/Bentuk Tubuh: tubuh mungil, tinggi 158cm..."></textarea>
+                        <button type="button" class="generate-btn" data-field="deskripsi_karakter">Generate</button>
+                    </div>
+                </div>
 
-                <label for="suara_karakter">3. Detail Suara Karakter</label>
-                <textarea id="suara_karakter" rows="6" placeholder="Contoh: Dia berbicara dengan suara wanita muda yang hangat dan penuh semangat. Nada: mezzo-soprano..."></textarea>
+                <div class="field-group">
+                    <label for="suara_karakter">3. Detail Suara Karakter</label>
+                    <div class="input-with-button">
+                        <textarea id="suara_karakter" rows="6" placeholder="Contoh: Dia berbicara dengan suara wanita muda yang hangat dan penuh semangat. Nada: mezzo-soprano..."></textarea>
+                        <button type="button" class="generate-btn" data-field="suara_karakter">Generate</button>
+                    </div>
+                </div>
 
-                <label for="aksi_karakter">4. Aksi Karakter</label>
-                <input type="text" id="aksi_karakter" placeholder="Contoh: berjalan di sekitar terminal bus malam...">
+                <div class="field-group">
+                    <label for="aksi_karakter">4. Aksi Karakter</label>
+                    <div class="input-with-button">
+                        <input type="text" id="aksi_karakter" placeholder="Contoh: berjalan di sekitar terminal bus malam...">
+                        <button type="button" class="generate-btn" data-field="aksi_karakter">Generate</button>
+                    </div>
+                </div>
 
-                <label for="ekspresi_karakter">5. Ekspresi Karakter</label>
-                <input type="text" id="ekspresi_karakter" placeholder="Contoh: Karakter menunjukkan ekspresi kagum dan antusias...">
+                <div class="field-group">
+                    <label for="ekspresi_karakter">5. Ekspresi Karakter</label>
+                    <div class="input-with-button">
+                        <input type="text" id="ekspresi_karakter" placeholder="Contoh: Karakter menunjukkan ekspresi kagum dan antusias...">
+                        <button type="button" class="generate-btn" data-field="ekspresi_karakter">Generate</button>
+                    </div>
+                </div>
             </div>
 
             <div class="form-column">
-                <label for="latar_tempat_waktu">6. Latar Tempat & Waktu</label>
-                <textarea id="latar_tempat_waktu" rows="4" placeholder="Contoh: latar tempat: di terminal bus antar kota malam hari..."></textarea>
+                <div class="field-group">
+                    <label for="latar_tempat_waktu">6. Latar Tempat & Waktu</label>
+                    <div class="input-with-button">
+                        <textarea id="latar_tempat_waktu" rows="4" placeholder="Contoh: latar tempat: di terminal bus antar kota malam hari..."></textarea>
+                        <button type="button" class="generate-btn" data-field="latar_tempat_waktu">Generate</button>
+                    </div>
+                </div>
 
-                <label for="detail_visual">7. Detail Visual Tambahan</label>
-                <textarea id="detail_visual" rows="4" placeholder="Contoh: Pencahayaan: natural dari lampu jalan... Gaya Video/Art Style: cinematic realistis..."></textarea>
+                <div class="field-group">
+                    <label for="detail_visual">7. Detail Visual Tambahan</label>
+                    <div class="input-with-button">
+                        <textarea id="detail_visual" rows="4" placeholder="Contoh: Pencahayaan: natural dari lampu jalan... Gaya Video/Art Style: cinematic realistis..."></textarea>
+                        <button type="button" class="generate-btn" data-field="detail_visual">Generate</button>
+                    </div>
+                </div>
                 
                 <label for="gerakan_kamera">Gerakan Kamera</label>
                 <select id="gerakan_kamera">
                     <!-- Opsi akan ditambahkan oleh JavaScript -->
                 </select>
 
-                <label for="suasana">8. Suasana Keseluruhan</label>
-                <input type="text" id="suasana" placeholder="Contoh: Suasana sibuk, ramai, dengan kesan perjalanan malam...">
+                <div class="field-group">
+                    <label for="suasana">8. Suasana Keseluruhan</label>
+                    <div class="input-with-button">
+                        <input type="text" id="suasana" placeholder="Contoh: Suasana sibuk, ramai, dengan kesan perjalanan malam...">
+                        <button type="button" class="generate-btn" data-field="suasana">Generate</button>
+                    </div>
+                </div>
 
-                <label for="suara_lingkungan">9. Suara Lingkungan/Ambience</label>
-                <input type="text" id="suara_lingkungan" placeholder="Contoh: SOUND: suara mesin bus menyala...">
+                <div class="field-group">
+                    <label for="suara_lingkungan">9. Suara Lingkungan/Ambience</label>
+                    <div class="input-with-button">
+                        <input type="text" id="suara_lingkungan" placeholder="Contoh: SOUND: suara mesin bus menyala...">
+                        <button type="button" class="generate-btn" data-field="suara_lingkungan">Generate</button>
+                    </div>
+                </div>
 
-                <label for="dialog_karakter">10. Dialog Karakter (dalam Bahasa Indonesia)</label>
-                <textarea id="dialog_karakter" rows="3" placeholder="Contoh: Karakter berkata: 'Tiap kota punya terminal kayak gini...'"></textarea>
+                <div class="field-group">
+                    <label for="dialog_karakter">10. Dialog Karakter (dalam Bahasa Indonesia)</label>
+                    <div class="input-with-button">
+                        <textarea id="dialog_karakter" rows="3" placeholder="Contoh: Karakter berkata: 'Tiap kota punya terminal kayak gini...'"></textarea>
+                        <button type="button" class="generate-btn" data-field="dialog_karakter">Generate</button>
+                    </div>
+                </div>
                 
-                <label for="negative_prompt">11. Negative Prompt</label>
-                <input type="text" id="negative_prompt" value="Hindari: teks di layar, subtitle, tulisan di video, font, logo, distorsi, artefak, anomali, wajah ganda, anggota badan cacat, tangan tidak normal, orang tambahan, objek mengganggu, kualitas rendah, buram, glitch, suara robotik, suara pecah.">
+                <div class="field-group">
+                    <label for="negative_prompt">11. Negative Prompt</label>
+                    <div class="input-with-button">
+                        <input type="text" id="negative_prompt" value="Hindari: teks di layar, subtitle, tulisan di video, font, logo, distorsi, artefak, anomali, wajah ganda, anggota badan cacat, tangan tidak normal, orang tambahan, objek mengganggu, kualitas rendah, buram, glitch, suara robotik, suara pecah.">
+                        <button type="button" class="generate-btn" data-field="negative_prompt">Generate</button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="button-group">
             <button id="generateBtn">Buat Prompt</button>
             <button id="resetBtn" type="button">Reset</button>
+            <button id="generateAllBtn" type="button">Generate Semua Field</button>
         </div>
 
         <div class="output-container">

@@ -160,22 +160,6 @@ body {
     background-color: #166fe5;
 }
 
-.btn-secondary {
-    background-color: #e4e6ea;
-    color: #1c1e21;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.btn-secondary:hover {
-    background-color: #d8dadf;
-}
-
 .btn-settings {
     background-color: #6c757d;
     color: white;

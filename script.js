@@ -64,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('apiKeyModal');
     const apiKeyInput = document.getElementById('apiKeyInput');
     const saveApiKeyBtn = document.getElementById('saveApiKey');
-    const skipApiKeyBtn = document.getElementById('skipApiKey');
     const changeApiKeyBtn = document.getElementById('changeApiKey');
 
     // Check for existing API key and show modal if needed
@@ -72,7 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedApiKey = sessionStorage.getItem('gemini_api_key');
         if (savedApiKey) {
             initializeGemini(savedApiKey);
-            updateUIForApiKey(true);
         } else {
             showModal();
         }
@@ -98,22 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error initializing Gemini AI:', error);
             showError('Error initializing Gemini AI. Please check your API key.');
-        }
-    }
-
-    // Update UI based on API key availability
-    function updateUIForApiKey(hasApiKey) {
-        const generateBtns = document.querySelectorAll('.generate-btn');
-        const generateAllBtn = document.getElementById('generateAllBtn');
-        
-        generateBtns.forEach(btn => {
-            btn.disabled = !hasApiKey;
-            btn.textContent = hasApiKey ? 'Generate' : 'No API';
-        });
-        
-        if (generateAllBtn) {
-            generateAllBtn.disabled = !hasApiKey;
-            generateAllBtn.textContent = hasApiKey ? 'Generate Semua Field' : 'API Key Required';
         }
     }
 
@@ -288,14 +270,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         sessionStorage.setItem('gemini_api_key', apiKey);
         initializeGemini(apiKey);
-        updateUIForApiKey(true);
         hideModal();
         apiKeyInput.value = ''; // Clear input for security
-    });
-
-    skipApiKeyBtn.addEventListener('click', () => {
-        hideModal();
-        updateUIForApiKey(false);
     });
 
     changeApiKeyBtn.addEventListener('click', () => {
@@ -322,6 +298,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Original generate prompt functionality with improved translation handling
     document.getElementById('generateBtn').addEventListener('click', async () => {
+        if (!model) {
+            showError('API Key belum diatur. Silakan masukkan API Key terlebih dahulu.');
+            return;
+        }
+
         const generateBtn = document.getElementById('generateBtn');
         generateBtn.disabled = true;
         generateBtn.textContent = 'Generating...';
@@ -369,42 +350,41 @@ ${negativePrompt}`;
 
             document.getElementById('output_indonesia').value = promptIndonesia;
 
-            // Translate to English if API is available
-            if (model) {
-                try {
-                    // Show warning about translation quota usage
-                    const proceed = confirm('⚠️ Terjemahan otomatis akan menggunakan banyak API quota.\n\nLanjutkan dengan terjemahan otomatis?\n\n- Ya: Terjemahkan ke bahasa Inggris (menggunakan quota)\n- Tidak: Hanya buat prompt bahasa Indonesia');
+            // Translate to English
+            try {
+                // Show warning about translation quota usage
+                const proceed = confirm('⚠️ Terjemahan otomatis akan menggunakan banyak API quota.\n\nLanjutkan dengan terjemahan otomatis?\n\n- Ya: Terjemahkan ke bahasa Inggris (menggunakan quota)\n- Tidak: Hanya buat prompt bahasa Indonesia');
+                
+                if (proceed) {
+                    generateBtn.textContent = 'Translating...';
                     
-                    if (proceed) {
-                        generateBtn.textContent = 'Translating...';
-                        
-                        const [
-                            judulEn,
-                            deskripsiKarakterEn,
-                            suaraKarakterEn,
-                            aksiKarakterEn,
-                            ekspresiKarakterEn,
-                            latarEn,
-                            detailVisualEn,
-                            suasanaEn,
-                            suaraLingkunganEn,
-                            dialogEn,
-                            negativePromptEn
-                        ] = await Promise.all([
-                            translateToEnglish(judul),
-                            translateToEnglish(deskripsiKarakter),
-                            translateToEnglish(suaraKarakter),
-                            translateToEnglish(aksiKarakter),
-                            translateToEnglish(ekspresiKarakter),
-                            translateToEnglish(latar),
-                            translateToEnglish(detailVisual),
-                            translateToEnglish(suasana),
-                            translateToEnglish(suaraLingkungan),
-                            translateToEnglish(dialog),
-                            translateToEnglish(negativePrompt)
-                        ]);
+                    const [
+                        judulEn,
+                        deskripsiKarakterEn,
+                        suaraKarakterEn,
+                        aksiKarakterEn,
+                        ekspresiKarakterEn,
+                        latarEn,
+                        detailVisualEn,
+                        suasanaEn,
+                        suaraLingkunganEn,
+                        dialogEn,
+                        negativePromptEn
+                    ] = await Promise.all([
+                        translateToEnglish(judul),
+                        translateToEnglish(deskripsiKarakter),
+                        translateToEnglish(suaraKarakter),
+                        translateToEnglish(aksiKarakter),
+                        translateToEnglish(ekspresiKarakter),
+                        translateToEnglish(latar),
+                        translateToEnglish(detailVisual),
+                        translateToEnglish(suasana),
+                        translateToEnglish(suaraLingkungan),
+                        translateToEnglish(dialog),
+                        translateToEnglish(negativePrompt)
+                    ]);
 
-                        const promptInggris = `**Scene Title:** ${judulEn}
+                    const promptInggris = `**Scene Title:** ${judulEn}
 
 **Core Character Description:**
 A consistent character: ${deskripsiKarakterEn}
@@ -429,23 +409,19 @@ ${dialog ? `**Character Dialogue (in Indonesian):**\nDIALOGUE: "${dialogEn}"` : 
 **Negative Prompt (Things to avoid):**
 ${negativePromptEn}`;
 
-                        document.getElementById('output_inggris').value = promptInggris;
-                    } else {
-                        document.getElementById('output_inggris').value = "English translation skipped to preserve API quota. You can manually translate the Indonesian prompt above or try again later.";
-                    }
-                } catch (error) {
-                    console.error('Error during translation:', error);
-                    
-                    if (error.message && (error.message.includes('429') || error.message.includes('quota'))) {
-                        showError('Quota API terlampaui saat menerjemahkan. Prompt bahasa Indonesia berhasil dibuat. Silakan tunggu beberapa menit sebelum mencoba terjemahan lagi.', true);
-                        document.getElementById('output_inggris').value = "Translation failed due to API quota limit. Indonesian prompt is ready above. Please wait a few minutes before trying translation again.";
-                    } else {
-                        document.getElementById('output_inggris').value = "Translation error occurred. Indonesian prompt is ready above. You can manually translate or try again later.";
-                    }
+                    document.getElementById('output_inggris').value = promptInggris;
+                } else {
+                    document.getElementById('output_inggris').value = "English translation skipped to preserve API quota. You can manually translate the Indonesian prompt above or try again later.";
                 }
-            } else {
-                // Fallback: show message that translation requires API key
-                document.getElementById('output_inggris').value = "English translation requires Gemini API key. Please set your API key to enable automatic translation.";
+            } catch (error) {
+                console.error('Error during translation:', error);
+                
+                if (error.message && (error.message.includes('429') || error.message.includes('quota'))) {
+                    showError('Quota API terlampaui saat menerjemahkan. Prompt bahasa Indonesia berhasil dibuat. Silakan tunggu beberapa menit sebelum mencoba terjemahan lagi.', true);
+                    document.getElementById('output_inggris').value = "Translation failed due to API quota limit. Indonesian prompt is ready above. Please wait a few minutes before trying translation again.";
+                } else {
+                    document.getElementById('output_inggris').value = "Translation error occurred. Indonesian prompt is ready above. You can manually translate or try again later.";
+                }
             }
 
         } catch (error) {

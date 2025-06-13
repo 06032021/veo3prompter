@@ -7,6 +7,34 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- API Key Modal -->
+    <div id="apiKeyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔑 Masukkan API Key Gemini</h2>
+                <p>Untuk menggunakan fitur AI Generator, silakan masukkan API Key Google Gemini Anda.</p>
+            </div>
+            <div class="modal-body">
+                <label for="apiKeyInput">API Key Gemini:</label>
+                <input type="password" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off">
+                <div class="api-help">
+                    <p><strong>Cara mendapatkan API Key:</strong></p>
+                    <ol>
+                        <li>Kunjungi <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></li>
+                        <li>Login dengan akun Google Anda</li>
+                        <li>Klik "Create API Key"</li>
+                        <li>Copy dan paste API Key di sini</li>
+                    </ol>
+                    <p class="privacy-note">🔒 API Key Anda hanya disimpan di browser dan tidak dikirim ke server manapun.</p>
+                </div>
+                <div class="modal-buttons">
+                    <button id="saveApiKey" class="btn-primary">Simpan & Lanjutkan</button>
+                    <button id="skipApiKey" class="btn-secondary">Lewati (Mode Manual)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <h1>Veo 3 Consistent Character Prompt Generator by hilvanto</h1>
         <p>Isi kolom di bawah ini untuk menghasilkan prompt yang terstruktur untuk Veo 3.</p>
@@ -114,6 +142,7 @@
             <button id="generateBtn">Buat Prompt</button>
             <button id="resetBtn" type="button">Reset</button>
             <button id="generateAllBtn" type="button">Generate Semua Field</button>
+            <button id="changeApiKey" type="button" class="btn-settings">⚙️ Ganti API Key</button>
         </div>
 
         <div class="output-container">
@@ -127,6 +156,6 @@
             </div>
         </div>
     </div>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>

@@ -3,6 +3,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 document.addEventListener('DOMContentLoaded', () => {
     let genAI = null;
     let model = null;
+    let requestQueue = [];
+    let isProcessingQueue = false;
+    const REQUEST_DELAY = 4000; // 4 seconds between requests to stay under 15/minute limit
 
     const cameraMovements = {
         "Static": "Statis",
@@ -114,9 +117,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Show error message
-    function showError(message) {
-        alert(message); // Simple alert for now, can be improved with better UI
+    // Show error message with better handling for quota errors
+    function showError(message, isQuotaError = false) {
+        let displayMessage = message;
+        
+        if (isQuotaError) {
+            displayMessage = `⚠️ Quota API Terlampaui!\n\nAnda telah mencapai batas penggunaan API Gemini (15 request per menit).\n\nSolusi:\n1. Tunggu 1-2 menit sebelum mencoba lagi\n2. Gunakan fitur "Generate" satu per satu dengan jeda\n3. Periksa billing Google Cloud jika sering terjadi\n4. Generate API key baru jika diperlukan\n\nError: ${message}`;
+        }
+        
+        alert(displayMessage);
     }
 
     // Show success animation
@@ -127,7 +136,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
-    // Generate content using Gemini AI
+    // Rate limiting queue processor
+    async function processRequestQueue() {
+        if (isProcessingQueue || requestQueue.length === 0) return;
+        
+        isProcessingQueue = true;
+        
+        while (requestQueue.length > 0) {
+            const request = requestQueue.shift();
+            try {
+                await request();
+                // Wait between requests to respect rate limits
+                if (requestQueue.length > 0) {
+                    await new Promise(resolve => setTimeout(resolve, REQUEST_DELAY));
+                }
+            } catch (error) {
+                console.error('Error processing queued request:', error);
+            }
+        }
+        
+        isProcessingQueue = false;
+    }
+
+    // Add request to queue
+    function queueRequest(requestFunction) {
+        requestQueue.push(requestFunction);
+        processRequestQueue();
+    }
+
+    // Generate content using Gemini AI with improved error handling
     async function generateContent(fieldName) {
         if (!model) {
             showError('API Key belum diatur. Silakan masukkan API Key terlebih dahulu.');
@@ -144,26 +181,39 @@ document.addEventListener('DOMContentLoaded', () => {
         generateBtn.textContent = 'Loading...';
         fieldElement.classList.add('loading');
 
-        try {
-            const prompt = fieldPrompts[fieldName];
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
-            
-            fieldElement.value = text.trim();
-            showSuccess(fieldElement);
-        } catch (error) {
-            console.error('Error generating content:', error);
-            showError('Terjadi kesalahan saat generate content. Silakan coba lagi.');
-        } finally {
-            // Reset loading state
-            generateBtn.disabled = false;
-            generateBtn.textContent = 'Generate';
-            fieldElement.classList.remove('loading');
-        }
+        const requestFunction = async () => {
+            try {
+                const prompt = fieldPrompts[fieldName];
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                const text = response.text();
+                
+                fieldElement.value = text.trim();
+                showSuccess(fieldElement);
+            } catch (error) {
+                console.error('Error generating content:', error);
+                
+                // Check if it's a quota error
+                if (error.message && error.message.includes('429')) {
+                    showError(error.message, true);
+                } else if (error.message && error.message.includes('quota')) {
+                    showError('Quota API terlampaui. Silakan tunggu beberapa menit sebelum mencoba lagi.', true);
+                } else {
+                    showError('Terjadi kesalahan saat generate content. Silakan coba lagi.');
+                }
+            } finally {
+                // Reset loading state
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'Generate';
+                fieldElement.classList.remove('loading');
+            }
+        };
+
+        // Add to queue instead of executing immediately
+        queueRequest(requestFunction);
     }
 
-    // Generate all fields
+    // Generate all fields with improved rate limiting
     async function generateAllFields() {
         if (!model) {
             showError('API Key belum diatur. Silakan masukkan API Key terlebih dahulu.');
@@ -174,15 +224,29 @@ document.addEventListener('DOMContentLoaded', () => {
         generateAllBtn.disabled = true;
         generateAllBtn.textContent = 'Generating...';
 
-        const fieldNames = Object.keys(fieldPrompts);
-        const promises = fieldNames.map(fieldName => generateContent(fieldName));
+        // Show warning about rate limits
+        const proceed = confirm('⚠️ Perhatian!\n\nGenerate semua field akan membuat banyak request ke API Gemini.\nProses ini akan memakan waktu sekitar 1-2 menit untuk menghindari quota limit.\n\nLanjutkan?');
+        
+        if (!proceed) {
+            generateAllBtn.disabled = false;
+            generateAllBtn.textContent = 'Generate Semua Field';
+            return;
+        }
 
         try {
-            await Promise.all(promises);
+            const fieldNames = Object.keys(fieldPrompts);
+            
+            // Queue all requests instead of running them in parallel
+            fieldNames.forEach(fieldName => {
+                generateContent(fieldName);
+            });
             
             // Also set random camera movement
             const randomCameraIndex = Math.floor(Math.random() * Object.keys(cameraMovements).length);
             cameraSelect.selectedIndex = randomCameraIndex;
+            
+            // Show info message
+            showError('Semua field sedang di-generate secara bertahap untuk menghindari quota limit. Mohon tunggu...', false);
             
         } catch (error) {
             console.error('Error generating all fields:', error);
@@ -193,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Translate text using Gemini AI
+    // Translate text using Gemini AI with improved error handling
     async function translateToEnglish(text) {
         if (!model || !text.trim()) return text;
 
@@ -204,7 +268,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return response.text().trim();
         } catch (error) {
             console.error('Error translating text:', error);
-            return text; // Return original text if translation fails
+            
+            // Check if it's a quota error
+            if (error.message && (error.message.includes('429') || error.message.includes('quota'))) {
+                throw error; // Re-throw quota errors to be handled by caller
+            }
+            
+            return text; // Return original text for other errors
         }
     }
 
@@ -250,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Generate All Fields button
     document.getElementById('generateAllBtn').addEventListener('click', generateAllFields);
 
-    // Original generate prompt functionality with translation
+    // Original generate prompt functionality with improved translation handling
     document.getElementById('generateBtn').addEventListener('click', async () => {
         const generateBtn = document.getElementById('generateBtn');
         generateBtn.disabled = true;
@@ -301,33 +371,40 @@ ${negativePrompt}`;
 
             // Translate to English if API is available
             if (model) {
-                const [
-                    judulEn,
-                    deskripsiKarakterEn,
-                    suaraKarakterEn,
-                    aksiKarakterEn,
-                    ekspresiKarakterEn,
-                    latarEn,
-                    detailVisualEn,
-                    suasanaEn,
-                    suaraLingkunganEn,
-                    dialogEn,
-                    negativePromptEn
-                ] = await Promise.all([
-                    translateToEnglish(judul),
-                    translateToEnglish(deskripsiKarakter),
-                    translateToEnglish(suaraKarakter),
-                    translateToEnglish(aksiKarakter),
-                    translateToEnglish(ekspresiKarakter),
-                    translateToEnglish(latar),
-                    translateToEnglish(detailVisual),
-                    translateToEnglish(suasana),
-                    translateToEnglish(suaraLingkungan),
-                    translateToEnglish(dialog),
-                    translateToEnglish(negativePrompt)
-                ]);
+                try {
+                    // Show warning about translation quota usage
+                    const proceed = confirm('⚠️ Terjemahan otomatis akan menggunakan banyak API quota.\n\nLanjutkan dengan terjemahan otomatis?\n\n- Ya: Terjemahkan ke bahasa Inggris (menggunakan quota)\n- Tidak: Hanya buat prompt bahasa Indonesia');
+                    
+                    if (proceed) {
+                        generateBtn.textContent = 'Translating...';
+                        
+                        const [
+                            judulEn,
+                            deskripsiKarakterEn,
+                            suaraKarakterEn,
+                            aksiKarakterEn,
+                            ekspresiKarakterEn,
+                            latarEn,
+                            detailVisualEn,
+                            suasanaEn,
+                            suaraLingkunganEn,
+                            dialogEn,
+                            negativePromptEn
+                        ] = await Promise.all([
+                            translateToEnglish(judul),
+                            translateToEnglish(deskripsiKarakter),
+                            translateToEnglish(suaraKarakter),
+                            translateToEnglish(aksiKarakter),
+                            translateToEnglish(ekspresiKarakter),
+                            translateToEnglish(latar),
+                            translateToEnglish(detailVisual),
+                            translateToEnglish(suasana),
+                            translateToEnglish(suaraLingkungan),
+                            translateToEnglish(dialog),
+                            translateToEnglish(negativePrompt)
+                        ]);
 
-                const promptInggris = `**Scene Title:** ${judulEn}
+                        const promptInggris = `**Scene Title:** ${judulEn}
 
 **Core Character Description:**
 A consistent character: ${deskripsiKarakterEn}
@@ -352,7 +429,20 @@ ${dialog ? `**Character Dialogue (in Indonesian):**\nDIALOGUE: "${dialogEn}"` : 
 **Negative Prompt (Things to avoid):**
 ${negativePromptEn}`;
 
-                document.getElementById('output_inggris').value = promptInggris;
+                        document.getElementById('output_inggris').value = promptInggris;
+                    } else {
+                        document.getElementById('output_inggris').value = "English translation skipped to preserve API quota. You can manually translate the Indonesian prompt above or try again later.";
+                    }
+                } catch (error) {
+                    console.error('Error during translation:', error);
+                    
+                    if (error.message && (error.message.includes('429') || error.message.includes('quota'))) {
+                        showError('Quota API terlampaui saat menerjemahkan. Prompt bahasa Indonesia berhasil dibuat. Silakan tunggu beberapa menit sebelum mencoba terjemahan lagi.', true);
+                        document.getElementById('output_inggris').value = "Translation failed due to API quota limit. Indonesian prompt is ready above. Please wait a few minutes before trying translation again.";
+                    } else {
+                        document.getElementById('output_inggris').value = "Translation error occurred. Indonesian prompt is ready above. You can manually translate or try again later.";
+                    }
+                }
             } else {
                 // Fallback: show message that translation requires API key
                 document.getElementById('output_inggris').value = "English translation requires Gemini API key. Please set your API key to enable automatic translation.";

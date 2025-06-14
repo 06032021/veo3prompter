@@ -65,6 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiKeyInput = document.getElementById('apiKeyInput');
     const saveApiKeyBtn = document.getElementById('saveApiKey');
     const changeApiKeyBtn = document.getElementById('changeApiKey');
+    const closeModalBtn = document.getElementById('closeModal');
+
+    // Check if API key is available
+    function hasApiKey() {
+        return sessionStorage.getItem('gemini_api_key') && model;
+    }
 
     // Check for existing API key and show modal if needed
     function checkApiKey() {
@@ -148,8 +154,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Generate content using Gemini AI with improved error handling
     async function generateContent(fieldName) {
-        if (!model) {
-            showError('API Key belum diatur. Silakan masukkan API Key terlebih dahulu.');
+        // Check if API key is available
+        if (!hasApiKey()) {
+            showError('⚠️ API Key Diperlukan!\n\nSilakan masukkan API Key Gemini terlebih dahulu untuk menggunakan fitur Generate.');
+            showModal();
             return;
         }
 
@@ -197,8 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Generate all fields with improved rate limiting
     async function generateAllFields() {
-        if (!model) {
-            showError('API Key belum diatur. Silakan masukkan API Key terlebih dahulu.');
+        // Check if API key is available
+        if (!hasApiKey()) {
+            showError('⚠️ API Key Diperlukan!\n\nSilakan masukkan API Key Gemini terlebih dahulu untuk menggunakan fitur Generate.');
+            showModal();
             return;
         }
 
@@ -278,6 +288,16 @@ document.addEventListener('DOMContentLoaded', () => {
         showModal();
     });
 
+    // Close modal button
+    closeModalBtn.addEventListener('click', () => {
+        // Only allow closing if API key is already set
+        if (hasApiKey()) {
+            hideModal();
+        } else {
+            showError('⚠️ API Key Diperlukan!\n\nAnda harus memasukkan API Key Gemini untuk menggunakan aplikasi ini.');
+        }
+    });
+
     // Handle Enter key in API key input
     apiKeyInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -298,8 +318,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Original generate prompt functionality with improved translation handling
     document.getElementById('generateBtn').addEventListener('click', async () => {
-        if (!model) {
-            showError('API Key belum diatur. Silakan masukkan API Key terlebih dahulu.');
+        // Check if API key is available
+        if (!hasApiKey()) {
+            showError('⚠️ API Key Diperlukan!\n\nSilakan masukkan API Key Gemini terlebih dahulu untuk membuat prompt.');
+            showModal();
             return;
         }
 

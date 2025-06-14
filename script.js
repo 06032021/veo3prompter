@@ -67,9 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const changeApiKeyBtn = document.getElementById('changeApiKey');
     const closeModalBtn = document.getElementById('closeModal');
 
-    // Check if API key is available
+    // Check if API key is available and model is initialized
     function hasApiKey() {
-        return sessionStorage.getItem('gemini_api_key') && model;
+        const savedApiKey = sessionStorage.getItem('gemini_api_key');
+        return savedApiKey && genAI && model;
     }
 
     // Check for existing API key and show modal if needed
@@ -99,9 +100,11 @@ document.addEventListener('DOMContentLoaded', () => {
             genAI = new GoogleGenerativeAI(apiKey);
             model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
             console.log('Gemini AI initialized successfully');
+            return true;
         } catch (error) {
             console.error('Error initializing Gemini AI:', error);
             showError('Error initializing Gemini AI. Please check your API key.');
+            return false;
         }
     }
 
@@ -278,23 +281,30 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        sessionStorage.setItem('gemini_api_key', apiKey);
-        initializeGemini(apiKey);
-        hideModal();
-        apiKeyInput.value = ''; // Clear input for security
+        // Try to initialize Gemini with the provided API key
+        if (initializeGemini(apiKey)) {
+            sessionStorage.setItem('gemini_api_key', apiKey);
+            hideModal();
+            apiKeyInput.value = ''; // Clear input for security
+            showError('API Key berhasil disimpan dan Gemini AI telah diinisialisasi!', false);
+        } else {
+            // If initialization failed, don't save the API key
+            sessionStorage.removeItem('gemini_api_key');
+            genAI = null;
+            model = null;
+        }
     });
 
     changeApiKeyBtn.addEventListener('click', () => {
         showModal();
     });
 
-    // Close modal button
+    // Close modal button - only allow closing if API key is properly set and initialized
     closeModalBtn.addEventListener('click', () => {
-        // Only allow closing if API key is already set
         if (hasApiKey()) {
             hideModal();
         } else {
-            showError('⚠️ API Key Diperlukan!\n\nAnda harus memasukkan API Key Gemini untuk menggunakan aplikasi ini.');
+            showError('⚠️ API Key Diperlukan!\n\nAnda harus memasukkan API Key Gemini yang valid untuk menggunakan aplikasi ini.');
         }
     });
 
